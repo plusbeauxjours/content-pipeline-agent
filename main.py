@@ -6,14 +6,21 @@ class ContentPipelineState(BaseModel):
 
     content_type: str = ""
     topic: str = ""
+
     max_length: int = 0
+    score: int = 0
+
+    blog: str = ""
+    tweet: str = ""
+    linkedin_post: str = ""
 
 
-class ContentPipelineFlow(Flow):
+class ContentPipelineFlow(Flow[ContentPipelineState]):
 
     @start()
     def init_content_pipeline(self):
-        if self.state.content_type not in ["blog", "tweet"]:
+
+        if self.state.content_type not in ["blog", "tweet", "linkedin"]:
             raise ValueError("Content type must be either blog or tweet")
 
         if self.topic == "":
@@ -32,28 +39,28 @@ class ContentPipelineFlow(Flow):
         return True
 
     @router(conduct_research)
-    def router(self) -> str:
+    def conduct_research_router(self) -> str:
         content_type = self.state.content_type
 
         if content_type == "blog":
             return "make_blog"
         elif content_type == "tweet":
             return "make_tweet"
-        elif content_type == "linkedin":
-            return "make_linkedin"
+        else:
+            return "make_linkedin_post"
 
-    @listen("make_blog")
+    @listen(or_("make_blog", "remake_blog"))
     def handle_make_blog(self) -> bool:
         print("Making blog...")
         return True
 
-    @listen("make_tweet")
+    @listen(or_("make_tweet", "remake_tweet"))
     def handle_make_tweet(self) -> bool:
         print("Making tweet...")
         return True
 
-    @listen("make_linkedin")
-    def handle_make_linkedin(self) -> bool:
+    @listen(or_("make_linkedin_post", "remake_linkedin_post"))
+    def handle_make_linkedin_post(self) -> bool:
         print("Making linkedin...")
         return True
 
@@ -62,15 +69,31 @@ class ContentPipelineFlow(Flow):
         print("Checking SEO...")
         return True
 
-    @listen(or_(handle_make_tweet, handle_make_linkedin))
+    @listen(or_(handle_make_tweet, handle_make_linkedin_post))
     def check_virality(self) -> bool:
         print("Checking Virality...")
         return True
 
-    @listen(or_(check_seo, check_virality))
-    def finalize_content(self) -> bool:
-        print("Finalizing content...")
-        return True
+    @router(or_(check_seo, check_virality))
+    def score_router(self) -> str:
+
+        content_type = self.state.content_type
+        score = self.state.score
+
+        if score > 8:
+            return "check_passed"
+        else:
+            if content_type == "blog":
+                return "remake_blog"
+            elif content_type == "tweet":
+                return "remake_tweet"
+            else:
+                return "remake_linkedin_post"
+
+    # @listen("check_passed")
+    # def finalize_content(self) -> bool:
+    #     print("Finalizing content...")
+    #     return True
 
 
 flow = ContentPipelineFlow()
