@@ -90,10 +90,10 @@ class ContentPipelineFlow(Flow[ContentPipelineState]):
             else:
                 return "remake_linkedin_post"
 
-    # @listen("check_passed")
-    # def finalize_content(self) -> bool:
-    #     print("Finalizing content...")
-    #     return True
+    @listen(score_router)
+    def finalize_content(self) -> bool:
+        print("Finalizing content...")
+        return True
 
 
 flow = ContentPipelineFlow()
