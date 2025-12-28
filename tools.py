@@ -1,7 +1,7 @@
 import os, re
 
 from crewai.tools import tool
-from firecrawl import FirecrawlApp, ScrapeOptions
+from firecrawl import FirecrawlApp
 
 
 @tool
@@ -19,9 +19,7 @@ def web_search_tool(query: str):
     response = app.search(
         query=query,
         limit=5,
-        scrape_options=ScrapeOptions(
-            formats=["markdown"],
-        ),
+        scrape_options={"formats": ["markdown"]},
     )
 
     if not response.success:
